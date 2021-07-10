@@ -27,12 +27,22 @@ const useStyles = makeStyles(theme => ({
   title: {
     marginTop: theme.spacing(3),
     color: theme.palette.protectedTitle
+  },
+  bigAvatar: {
+    width: 60,
+    height: 60,
+    margin: 10
   }
 }))
 
 export default function Profile({ match }) {
   const classes = useStyles()
   const [user, setUser] = useState({})
+  const [values, setValues] = useState({
+    user: {following:[], followers:[]},
+    redirectToSignin: false,
+    following: false
+  })
   const [redirectToSignin, setRedirectToSignin] = useState(false)
   const jwt = auth.isAuthenticated()
 
@@ -44,9 +54,10 @@ export default function Profile({ match }) {
       userId: match.params.userId
     }, {t: jwt.token}, signal).then((data) => {
       if (data && data.error) {
-        setRedirectToSignin(true)
+        setValues({...values, redirectToSignin: true})
       } else {
         setUser(data)
+        setValues({...values, user: data})
       }
     })
 
@@ -56,6 +67,10 @@ export default function Profile({ match }) {
 
   }, [match.params.userId])
   
+  const photoUrl = values.user._id
+              ? `/api/users/photo/${values.user._id}?${new Date().getTime()}`
+              : '/api/users/defaultphoto'
+
     if (redirectToSignin) {
       return <Redirect to='/signin'/>
     }
@@ -67,9 +82,7 @@ export default function Profile({ match }) {
         <List dense>
           <ListItem>
             <ListItemAvatar>
-              <Avatar>
-                <Person/>
-              </Avatar>
+              <Avatar src={photoUrl} className={classes.bigAvatar}/>
             </ListItemAvatar>
             <ListItemText primary={user.name} secondary={user.email}/> {
              auth.isAuthenticated().user && auth.isAuthenticated().user._id == user._id &&
